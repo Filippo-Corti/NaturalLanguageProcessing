@@ -1,7 +1,6 @@
 """Utilities to manage wordbags
 """
 from collections import defaultdict
-from typing import List
 import numpy as np
 from torch.utils.data import DataLoader, TensorDataset
 import torch
@@ -10,7 +9,7 @@ import torch
 class Bow:
     def __init__(
             self,
-            corpus: List[list],
+            corpus: list[list[str]],
             min_occurrences: int = 0,  # Min number of occurrences to be in the BoW
             max_occurrences: int = 500  # Max number of occurrences to be in the BoW
     ):
@@ -18,8 +17,8 @@ class Bow:
 
         # Build the BoW, counting word frequencies
         self.vocabulary = defaultdict(lambda: 0)
-        for words in self.corpus:
-            for word in words:
+        for doc in self.corpus:
+            for word in doc:
                 self.vocabulary[word] += 1
         self.vocabulary = [
             x
