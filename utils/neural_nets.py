@@ -251,6 +251,13 @@ class GeneratorRNN(nn.Module):
 
 
 class EncoderRNN(nn.Module):
+    """
+    The Encoder of a Encoder-Decoder seq2seq architecture.
+
+    The Encoder trains to learn the next token, but the output is actually ignored.
+    What we care about is its ability to produce sequences' embeddings, given by the
+    internal state of the RNN inside it.
+    """
     def __init__(self, input_size, hidden_size, dropout_p=0.1):
         super(EncoderRNN, self).__init__()
         self.hidden_size = hidden_size
@@ -260,9 +267,9 @@ class EncoderRNN(nn.Module):
         self.dropout = nn.Dropout(dropout_p)
 
     def forward(self, input):
-        embedded = self.dropout(self.embedding(input))
-        output, hidden = self.gru(embedded)
-        return output, hidden
+        embedded = self.dropout(self.embedding(input)) # Produce the Embedding
+        output, hidden = self.gru(embedded) # Run the Embedding through the RNN
+        return output, hidden # Return the output (we don't care about it) and all the hidden states.
 
 
 class BahdanauAttention(nn.Module):
