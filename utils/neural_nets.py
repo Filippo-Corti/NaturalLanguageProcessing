@@ -267,7 +267,7 @@ class EncoderRNN(nn.Module):
         self.dropout = nn.Dropout(dropout_p)
 
     def forward(self, input):
-        embedded = self.dropout(self.embedding(input)) # Produce the Embedding
+        embedded = self.dropout(self.embedding(input)) # Look-up the Embedding
         output, hidden = self.gru(embedded) # Run the Embedding through the RNN
         return output, hidden # Return the output (we don't care about it) and all the hidden states.
 
@@ -290,6 +290,12 @@ class BahdanauAttention(nn.Module):
 
 
 class DecoderRNN(nn.Module):
+    """
+    The Decoder of a Encoder-Decoder seq2seq architecture.
+
+    The Decoder trains to learn the next token, in order to generate a new sequence.
+    Just like the Encoder, it is built on a RNN.
+    """
     def __init__(self, hidden_size, output_size, dropout_p=0.1):
         super(DecoderRNN, self).__init__()
         self.embedding = nn.Embedding(output_size, hidden_size)
@@ -301,7 +307,7 @@ class DecoderRNN(nn.Module):
     def forward(self, encoder_outputs, encoder_hidden, target_tensor=None):
         batch_size = encoder_outputs.size(0)
         decoder_input = torch.empty(batch_size, 1, dtype=torch.long).fill_(SOS_token)
-        decoder_hidden = encoder_hidden
+        decoder_hidden = encoder_hidden # Notice that the Decoder status is initialized to be that of the Encoder
         decoder_outputs = []
         attentions = []
 
@@ -314,11 +320,11 @@ class DecoderRNN(nn.Module):
 
             if target_tensor is not None:
                 # Teacher forcing: Feed the target as the next input
-                decoder_input = target_tensor[:, i].unsqueeze(1)  # Teacher forcing
+                decoder_input = target_tensor[:, i].unsqueeze(1)
             else:
                 # Without teacher forcing: use its own predictions as the next input
                 _, topi = decoder_output.topk(1)
-                decoder_input = topi.squeeze(-1).detach()  # detach from history as input
+                decoder_input = topi.squeeze(-1).detach()
 
         decoder_outputs = torch.cat(decoder_outputs, dim=1)
         decoder_outputs = F.log_softmax(decoder_outputs, dim=-1)
@@ -327,12 +333,14 @@ class DecoderRNN(nn.Module):
         return decoder_outputs, decoder_hidden, attentions
 
     def forward_step(self, input, hidden, encoder_outputs):
-        embedded = self.dropout(self.embedding(input))
+        embedded = self.dropout(self.embedding(input)) # Look-up the Embedding
 
+        # Compute Attention Weights based on the Current Hidden State and the Previous Encoder Hidden States
         query = hidden.permute(1, 0, 2)
         context, attn_weights = self.attention(query, encoder_outputs)
-        input_gru = torch.cat((embedded, context), dim=2)
 
+        # Run the RNN to generate the new token
+        input_gru = torch.cat((embedded, context), dim=2)
         output, hidden = self.gru(input_gru, hidden)
         output = self.out(output)
 
