@@ -287,7 +287,7 @@ class BahdanauAttention(nn.Module):
         scores = self.Va(torch.tanh(self.Wa(query) + self.Ua(keys)))
         scores = scores.squeeze(2).unsqueeze(1)
 
-        # Transforms scores in weights
+        # Transforms scores in weights and compute Matrix Multiplication (bmm) to produce the context
         weights = F.softmax(scores, dim=-1)
         context = torch.bmm(weights, keys)
 
