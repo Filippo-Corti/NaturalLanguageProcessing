@@ -263,7 +263,7 @@ class EncoderRNN(nn.Module):
         super(EncoderRNN, self).__init__()
         self.hidden_size = hidden_size
 
-        self.embedding = nn.Embedding(input_size, hidden_size)
+        self.embedding = nn.Embedding(input_size, hidden_size) # Look-up (like word2vec)
         self.gru = nn.GRU(hidden_size, hidden_size, batch_first=True)
         self.dropout = nn.Dropout(dropout_p)
 
@@ -287,9 +287,11 @@ class BahdanauAttention(nn.Module):
         scores = self.Va(torch.tanh(self.Wa(query) + self.Ua(keys)))
         scores = scores.squeeze(2).unsqueeze(1)
 
-        # Transforms scores in weights and compute Matrix Multiplication (bmm) to produce the context
+        # Each encoder state is associated a score, based on the current decoder state
+        # Scores are transformed into weights
+        # Weighted encoder states are passed back to the decoder
         weights = F.softmax(scores, dim=-1)
-        context = torch.bmm(weights, keys)
+        context = torch.bmm(weights, keys) # bmm is Matrix Multiplication
 
         return context, weights
 
@@ -345,8 +347,9 @@ class DecoderRNN(nn.Module):
         query = hidden.permute(1, 0, 2)  # Re-order dimensions
         context, attn_weights = self.attention(query, encoder_outputs)
 
-        # Run the RNN to generate the new token
+        # Concatenate the previous token with the attention
         input_gru = torch.cat((embedded, context), dim=2)
+        # Run the RNN to generate the new token
         output, hidden = self.gru(input_gru, hidden)
         output = self.out(output)
 
