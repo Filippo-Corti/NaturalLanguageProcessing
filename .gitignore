@@ -6,5 +6,7 @@
 .ipynb_checkpoints/
 
 *.csv
+/data/it-en/
 
 __pycache__
+
