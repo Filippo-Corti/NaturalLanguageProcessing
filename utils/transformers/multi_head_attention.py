@@ -113,24 +113,26 @@ class MultiHeadCrossAttention(nn.Module):
     def forward(
             self,
             x: torch.Tensor,
+            y: torch.Tensor,
             mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """
         Forward pass of the Module
 
-        :param x: the current tensor
+        :param x: the encoder tensor
+        :param y: the decoder tensor
         :param mask: optional mask for hiding future values
         :return: the new tensor x
         """
         batch_size, sequence_length, d_model = x.size()
 
         # Separate K and V
-        kv = self.qkv_layer(x)
+        kv = self.qkv_layer(x) # Coming from the Encoder
         kv = kv.reshape(batch_size, sequence_length, self.num_heads, 2 * self.head_dim)
         kv = kv.permute(0, 2, 1, 3)
         k, v = kv.chunk(2, dim=-1)
 
-        q = self.q_layer(x)
+        q = self.q_layer(y) # Coming from the Decoder
         q = q.reshape(batch_size, sequence_length, self.num_heads, self.head_dim)
         q = q.permute(0, 2, 1, 3)
 

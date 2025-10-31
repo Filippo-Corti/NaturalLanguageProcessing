@@ -12,7 +12,7 @@ class NormalizationLayer(nn.Module):
 
     def __init__(
             self,
-            shape: int,
+            shape: list[int],
             eps: float = 1e-5,
     ):
         """
